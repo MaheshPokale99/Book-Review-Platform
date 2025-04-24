@@ -3,8 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const config = require('../config/config');
 
-
-// Zod Schemas for validation
+// Zod Schemas
 const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters long'),
   email: z.string().email('Invalid email address'),
@@ -16,28 +15,19 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-// Register user
+// Register User
 exports.registerUser = async (req, res) => {
   try {
-    const parsedBody = registerSchema.safeParse(req.body);
-
-    if (!parsedBody.success) {
-      return res.status(422).json({
-        errors: parsedBody.error.errors.map((e) => ({
-          message: e.message,
-          path: e.path,
-        })),
-      });
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(422).json({ errors: parsed.error.errors });
     }
 
-    const { username, email, password } = parsedBody.data;
+    const { username, email, password } = parsed.data;
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
-
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'User with this email or username already exists' });
+      return res.status(400).json({ message: 'Email or username already exists' });
     }
 
     const user = new User({ username, email, password });
@@ -55,25 +45,20 @@ exports.registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating user' });
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Error registering user' });
   }
 };
 
-// Login user
+// Login User
 exports.loginUser = async (req, res) => {
   try {
-    const parsedBody = loginSchema.safeParse(req.body);
-
-    if (!parsedBody.success) {
-      return res.status(422).json({
-        errors: parsedBody.error.errors.map((e) => ({
-          message: e.message,
-          path: e.path,
-        })),
-      });
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(422).json({ errors: parsed.error.errors });
     }
 
-    const { email, password } = parsedBody.data;
+    const { email, password } = parsed.data;
     const user = await User.findOne({ email });
 
     if (!user || !(await user.comparePassword(password))) {
@@ -92,19 +77,19 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Error logging in' });
   }
 };
 
-// get current user
+// Get Current User
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
+    console.error('Get user error:', error);
     res.status(500).json({ message: 'Error fetching user' });
   }
 };
