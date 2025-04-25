@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { fetchBooks } from '../store/slices/bookSlice';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import toast from 'react-hot-toast';
 
 const BookList = () => {
   const dispatch = useDispatch();
@@ -12,25 +13,45 @@ const BookList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [genre, setGenre] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
+  // Debounce search term
   useEffect(() => {
-    dispatch(fetchBooks({ 
-      page: Number(currentPage), 
-      limit: 10, 
-      search: searchTerm, 
-      genre 
-    }));
-  }, [dispatch, currentPage, searchTerm, genre]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch books when filters change
+  useEffect(() => {
+    const params = {
+      page: Number(currentPage),
+      limit: 10,
+    };
+
+    if (debouncedSearchTerm) {
+      params.search = debouncedSearchTerm;
+    }
+
+    if (genre) {
+      params.genre = genre;
+    }
+
+    const fetchBooksPromise = dispatch(fetchBooks(params)).unwrap();
+    
+    toast.promise(fetchBooksPromise, {
+      loading: 'Loading books...',
+      success: 'Books loaded successfully',
+      error: (err) => `Error loading books: ${err.message || 'Something went wrong'}`,
+    });
+  }, [dispatch, currentPage, debouncedSearchTerm, genre]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    dispatch(fetchBooks({ 
-      page: 1, 
-      limit: 10, 
-      search: searchTerm, 
-      genre 
-    }));
+    toast.success('Filters applied successfully');
   };
 
   const handleGenreChange = (e) => {
@@ -43,6 +64,7 @@ const BookList = () => {
   };
 
   if (error) {
+    toast.error(`Error loading books: ${error}`);
     return (
       <div className="text-center text-red-500 p-4">
         <p>Error loading books: {error}</p>
@@ -58,7 +80,7 @@ const BookList = () => {
           <div className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
-              placeholder="Search books..."
+              placeholder="Search books by title or author..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input flex-grow"
@@ -69,15 +91,19 @@ const BookList = () => {
               className="input"
             >
               <option value="">All Genres</option>
-              <option value="fiction">Fiction</option>
-              <option value="non-fiction">Non-Fiction</option>
-              <option value="mystery">Mystery</option>
-              <option value="science-fiction">Science Fiction</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="romance">Romance</option>
+              <option value="Fiction">Fiction</option>
+              <option value="Non-Fiction">Non-Fiction</option>
+              <option value="Mystery">Mystery</option>
+              <option value="Science Fiction">Science Fiction</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Romance">Romance</option>
+              <option value="Thriller">Thriller</option>
+              <option value="Biography">Biography</option>
+              <option value="History">History</option>
+              <option value="Self-Help">Self-Help</option>
             </select>
             <button type="submit" className="btn btn-primary">
-              Search
+              Apply Filters
             </button>
           </div>
         </form>
@@ -96,7 +122,7 @@ const BookList = () => {
                 <Skeleton height={20} width="60%" />
               </div>
             ))
-        ) : (
+        ) : books.length > 0 ? (
           books.map((book) => (
             <Link
               key={book._id}
@@ -152,6 +178,10 @@ const BookList = () => {
               </div>
             </Link>
           ))
+        ) : (
+          <div className="col-span-full text-center py-8">
+            <p className="text-gray-600">No books found matching your criteria.</p>
+          </div>
         )}
       </div>
 

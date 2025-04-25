@@ -99,51 +99,67 @@ const BookDetails = () => {
       </div>
 
       {/* Reviews Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Reviews</h2>
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Reviews</h2>
         {reviewsLoading ? (
-          // Loading skeletons for reviews
-          Array(3)
-            .fill(0)
-            .map((_, index) => (
-              <div key={index} className="card mb-4">
-                <Skeleton height={24} width="40%" className="mb-2" />
-                <Skeleton height={20} width="20%" className="mb-4" />
-                <Skeleton count={3} />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white p-4 rounded-lg shadow animate-pulse">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
               </div>
-            ))
+            ))}
+          </div>
         ) : reviews.length > 0 ? (
-          reviews.map((review) => (
-            <div key={review._id} className="card mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {review.userId.username}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {new Date(review.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <div key={review._id} className="bg-white p-4 rounded-lg shadow">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={review.userId?.profilePicture || '/default-avatar.png'}
+                      alt={review.userId?.username}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold">{review.userId?.username}</p>
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-gray-600 whitespace-pre-wrap break-words">
+                      {review.refinedContent || review.originalContent}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {new Date(review.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-gray-700">{review.originalContent}</p>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
-          <p className="text-gray-600">No reviews yet. Be the first to review this book!</p>
+          <div className="text-center py-8">
+            <p className="text-gray-600">No reviews yet. Be the first to review this book!</p>
+          </div>
         )}
       </div>
     </div>

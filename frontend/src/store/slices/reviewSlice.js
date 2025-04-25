@@ -104,8 +104,8 @@ const reviewSlice = createSlice({
         state.pagination = {
           currentPage: action.payload.currentPage,
           totalPages: action.payload.totalPages,
-          totalItems: action.payload.totalItems,
-          itemsPerPage: action.payload.itemsPerPage,
+          totalItems: action.payload.totalReviews,
+          itemsPerPage: 10,
         };
       })
       .addCase(fetchReviews.rejected, (state, action) => {

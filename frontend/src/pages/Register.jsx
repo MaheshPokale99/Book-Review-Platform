@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../store/slices/authSlice';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,18 +19,19 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      // Error handling is done by the Alert component
+      toast.error('Passwords do not match');
       return;
     }
     try {
-      await dispatch(register({
+      const result = await dispatch(register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
       })).unwrap();
-      navigate('/');
+      toast.success('Registration successful! Please login.');
+      navigate('/login');
     } catch (error) {
-      // Error handling is done by the Alert component
+      toast.error(error.message || 'Registration failed. Please try again.');
     }
   };
 

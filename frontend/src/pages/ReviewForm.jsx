@@ -5,6 +5,7 @@ import { createReview } from '../store/slices/reviewSlice';
 import { fetchBookById } from '../store/slices/bookSlice';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import toast from 'react-hot-toast';
 
 const ReviewForm = () => {
   const { id } = useParams();
@@ -19,23 +20,30 @@ const ReviewForm = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchBookById(id));
+    const fetchBookPromise = dispatch(fetchBookById(id)).unwrap();
+    toast.promise(fetchBookPromise, {
+      loading: 'Loading book details...',
+      success: 'Book loaded successfully',
+      error: (err) => `Error loading book: ${err.message || 'Something went wrong'}`,
+    });
   }, [dispatch, id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (!formData.originalContent.trim()) {
-        throw new Error('Review content cannot be empty');
+        toast.error('Review content cannot be empty');
+        return;
       }
-      await dispatch(createReview({ 
+      const result = await dispatch(createReview({ 
         bookId: id, 
         rating: Number(formData.rating),
         originalContent: formData.originalContent.trim()
       })).unwrap();
+      toast.success('Review submitted successfully!');
       navigate(`/books/${id}`);
     } catch (error) {
-      console.error('Failed to create review:', error);
+      toast.error(error.message || 'Failed to submit review. Please try again.');
     }
   };
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/slices/authSlice';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,10 +17,11 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(login(formData)).unwrap();
+      const result = await dispatch(login(formData)).unwrap();
+      toast.success('Login successful!');
       navigate('/');
     } catch (error) {
-      // Error handling is done by the Alert component
+      toast.error(error.message || 'Login failed. Please try again.');
     }
   };
 
