@@ -7,26 +7,48 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 const BookList = () => {
   const dispatch = useDispatch();
-  const { books, loading, pagination } = useSelector((state) => state.books);
+  const { books, loading, pagination, error } = useSelector((state) => state.books);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState('');
+  const [genre, setGenre] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchBooks({ page: currentPage, search: searchTerm, category }));
-  }, [dispatch, currentPage, searchTerm, category]);
+    dispatch(fetchBooks({ 
+      page: Number(currentPage), 
+      limit: 10, 
+      search: searchTerm, 
+      genre 
+    }));
+  }, [dispatch, currentPage, searchTerm, genre]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    dispatch(fetchBooks({ page: 1, search: searchTerm, category }));
+    dispatch(fetchBooks({ 
+      page: 1, 
+      limit: 10, 
+      search: searchTerm, 
+      genre 
+    }));
   };
 
-  const handleCategoryChange = (e) => {
-    setCategory(e.target.value);
+  const handleGenreChange = (e) => {
+    setGenre(e.target.value);
     setCurrentPage(1);
   };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(Number(newPage));
+  };
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        <p>Error loading books: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -42,11 +64,11 @@ const BookList = () => {
               className="input flex-grow"
             />
             <select
-              value={category}
-              onChange={handleCategoryChange}
+              value={genre}
+              onChange={handleGenreChange}
               className="input"
             >
-              <option value="">All Categories</option>
+              <option value="">All Genres</option>
               <option value="fiction">Fiction</option>
               <option value="non-fiction">Non-Fiction</option>
               <option value="mystery">Mystery</option>
@@ -90,6 +112,11 @@ const BookList = () => {
                 {book.title}
               </h3>
               <p className="text-gray-600">{book.author}</p>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  Published: {new Date(book.publishedDate).toLocaleDateString()}
+                </p>
+              </div>
               <div className="mt-4 flex items-center">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
@@ -108,8 +135,20 @@ const BookList = () => {
                   ))}
                 </div>
                 <span className="ml-2 text-sm text-gray-600">
-                  ({book.reviewCount} reviews)
+                  ({book.totalReviews} reviews)
                 </span>
+              </div>
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-1">
+                  {book.genre.map((g, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 text-xs bg-gray-100 rounded-full"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
               </div>
             </Link>
           ))
@@ -120,7 +159,7 @@ const BookList = () => {
       {!loading && pagination.totalPages > 1 && (
         <div className="flex justify-center space-x-2">
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
             disabled={currentPage === 1}
             className="btn btn-secondary disabled:opacity-50"
           >
@@ -130,9 +169,7 @@ const BookList = () => {
             Page {currentPage} of {pagination.totalPages}
           </span>
           <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))
-            }
+            onClick={() => handlePageChange(Math.min(currentPage + 1, pagination.totalPages))}
             disabled={currentPage === pagination.totalPages}
             className="btn btn-secondary disabled:opacity-50"
           >

@@ -5,14 +5,29 @@ const API_URL = 'http://localhost:5000/api/books';
 
 export const fetchBooks = createAsyncThunk(
   'books/fetchBooks',
-  async ({ page = 1, limit = 10, search = '', category = '' }, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, search = '', genre = '' }, { rejectWithValue }) => {
     try {
+      // Convert page and limit to numbers
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      
       const response = await axios.get(`${API_URL}`, {
-        params: { page, limit, search, category }
+        params: { 
+          page: pageNum,
+          limit: limitNum,
+          search,
+          genre
+        }
       });
-      return response.data;
+      return {
+        books: response.data.books,
+        currentPage: response.data.currentPage,
+        totalPages: response.data.totalPages,
+        totalItems: response.data.totalItems,
+        itemsPerPage: response.data.itemsPerPage
+      };
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch books');
     }
   }
 );
@@ -24,7 +39,7 @@ export const fetchBookById = createAsyncThunk(
       const response = await axios.get(`${API_URL}/${id}`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch book');
     }
   }
 );
@@ -36,7 +51,7 @@ export const fetchFeaturedBooks = createAsyncThunk(
       const response = await axios.get(`${API_URL}/featured`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch featured books');
     }
   }
 );
@@ -85,7 +100,7 @@ const bookSlice = createSlice({
       })
       .addCase(fetchBooks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Failed to fetch books';
+        state.error = action.payload;
       })
       // Fetch Book by ID
       .addCase(fetchBookById.pending, (state) => {
@@ -98,7 +113,7 @@ const bookSlice = createSlice({
       })
       .addCase(fetchBookById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Failed to fetch book';
+        state.error = action.payload;
       })
       // Fetch Featured Books
       .addCase(fetchFeaturedBooks.pending, (state) => {
@@ -111,7 +126,7 @@ const bookSlice = createSlice({
       })
       .addCase(fetchFeaturedBooks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Failed to fetch featured books';
+        state.error = action.payload;
       });
   },
 });

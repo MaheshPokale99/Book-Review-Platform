@@ -15,7 +15,7 @@ const ReviewForm = () => {
 
   const [formData, setFormData] = useState({
     rating: 5,
-    content: '',
+    originalContent: '',
   });
 
   useEffect(() => {
@@ -25,10 +25,16 @@ const ReviewForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(createReview({ bookId: id, ...formData })).unwrap();
+      if (!formData.originalContent.trim()) {
+        throw new Error('Review content cannot be empty');
+      }
+      await dispatch(createReview({ 
+        bookId: id, 
+        rating: Number(formData.rating),
+        originalContent: formData.originalContent.trim()
+      })).unwrap();
       navigate(`/books/${id}`);
     } catch (error) {
-      // Error handling is done by the Alert component
       console.error('Failed to create review:', error);
     }
   };
@@ -97,17 +103,17 @@ const ReviewForm = () => {
           {/* Review Content */}
           <div>
             <label
-              htmlFor="content"
+              htmlFor="originalContent"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Your Review
             </label>
             <textarea
-              id="content"
+              id="originalContent"
               rows={6}
-              value={formData.content}
+              value={formData.originalContent}
               onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
+                setFormData({ ...formData, originalContent: e.target.value })
               }
               className="input"
               placeholder="Share your thoughts about this book..."

@@ -39,16 +39,31 @@ exports.getReviews = async (req, res) => {
   }
 };
 
-//  new review
+// Create new review
 exports.createReview = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
   try {
-    const { bookId, rating, content } = req.body;
+    const { bookId, rating, originalContent } = req.body;
     const userId = req.user._id;
+
+    // Validate required fields
+    if (!bookId || !rating || !originalContent) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        errors: {
+          bookId: !bookId ? 'Book ID is required' : undefined,
+          rating: !rating ? 'Rating is required' : undefined,
+          originalContent: !originalContent ? 'Review content is required' : undefined
+        }
+      });
+    }
+
+    // Validate rating range
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ 
+        message: 'Invalid rating',
+        errors: { rating: 'Rating must be between 1 and 5' }
+      });
+    }
 
     // Check if the user already reviewed this book
     const existingReview = await Review.findOne({ bookId, userId });
@@ -59,8 +74,8 @@ exports.createReview = async (req, res) => {
     const review = new Review({
       bookId,
       userId,
-      rating,
-      originalContent: content,
+      rating: Number(rating),
+      originalContent: originalContent.trim(),
     });
 
     await review.save();
@@ -77,7 +92,11 @@ exports.createReview = async (req, res) => {
 
     res.status(201).json(review);
   } catch (error) {
-    handleError(error, res);
+    console.error('Error creating review:', error);
+    res.status(500).json({ 
+      message: 'Error creating review',
+      error: error.message 
+    });
   }
 };
 

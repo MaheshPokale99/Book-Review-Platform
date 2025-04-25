@@ -10,12 +10,19 @@ const UserProfile = () => {
   const { user, loading: userLoading } = useSelector((state) => state.auth);
   const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
 
+  // Fetch user data only once when component mounts
   useEffect(() => {
-    dispatch(getCurrentUser());
-    if (user) {
-      dispatch(fetchReviews({ userId: user._id }));
+    if (!user) {
+      dispatch(getCurrentUser());
     }
   }, [dispatch, user]);
+
+  // Fetch reviews only when user is available
+  useEffect(() => {
+    if (user?._id && !reviewsLoading) {
+      dispatch(fetchReviews({ userId: user._id }));
+    }
+  }, [dispatch, user?._id]);
 
   if (userLoading) {
     return (
@@ -44,17 +51,33 @@ const UserProfile = () => {
       {/* User Info */}
       <div className="card">
         <div className="flex items-center space-x-6">
-          <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center">
-            <span className="text-3xl font-bold text-primary-600">
-              {user.name.charAt(0)}
-            </span>
-          </div>
+          {user.profilePicture ? (
+            <img
+              src={user.profilePicture}
+              alt={user.username}
+              className="w-24 h-24 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-3xl font-bold text-primary-600">
+                {user.username?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
+            </div>
+          )}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{user.username}</h1>
             <p className="text-gray-600">{user.email}</p>
-            <p className="text-gray-600">
+            {user.bio && (
+              <p className="text-gray-700 mt-2">{user.bio}</p>
+            )}
+            <p className="text-gray-600 mt-2">
               Member since {new Date(user.createdAt).toLocaleDateString()}
             </p>
+            {user.isAdmin && (
+              <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                Admin
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -79,7 +102,7 @@ const UserProfile = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {review.book.title}
+                    {review.book?.title || 'Unknown Book'}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {new Date(review.createdAt).toLocaleDateString()}
@@ -100,7 +123,7 @@ const UserProfile = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-gray-700">{review.content}</p>
+              <p className="text-gray-700">{review.originalContent}</p>
             </div>
           ))
         ) : (

@@ -118,7 +118,7 @@ const BookDetails = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {review.user.name}
+                    {review.userId.username}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {new Date(review.createdAt).toLocaleDateString()}
@@ -139,7 +139,7 @@ const BookDetails = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-gray-700">{review.content}</p>
+              <p className="text-gray-700">{review.originalContent}</p>
             </div>
           ))
         ) : (

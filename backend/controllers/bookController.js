@@ -15,8 +15,20 @@ const createBookSchema = z.object({
 });
 
 const queryBooksSchema = z.object({
-    page: z.number().min(1).optional(),
-    limit: z.number().min(1).max(50).optional(),
+    page: z.string().transform((val) => {
+        const num = Number(val);
+        if (isNaN(num)) throw new Error('Page must be a number');
+        return num;
+    }).refine((val) => val >= 1, {
+        message: 'Page must be at least 1',
+    }).optional(),
+    limit: z.string().transform((val) => {
+        const num = Number(val);
+        if (isNaN(num)) throw new Error('Limit must be a number');
+        return num;
+    }).refine((val) => val >= 1 && val <= 50, {
+        message: 'Limit must be between 1 and 50',
+    }).optional(),
     genre: z.string().optional(),
     search: z.string().optional(),
 });
@@ -122,5 +134,26 @@ exports.deleteBook = async (req, res) => {
         res.json({ message: 'Book deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting book' });
+    }
+};
+
+// Get featured books
+exports.getFeaturedBooks = async (req, res) => {
+    try {
+        // Get books with highest ratings and most reviews
+        const featuredBooks = await Book.find()
+            .sort({ 
+                averageRating: -1,
+                totalReviews: -1 
+            })
+            .limit(6); // Get top 6 featured books
+
+        res.json(featuredBooks);
+    } catch (error) {
+        console.error('Error fetching featured books:', error);
+        res.status(500).json({ 
+            message: 'Error fetching featured books',
+            error: error.message 
+        });
     }
 };
